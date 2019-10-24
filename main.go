@@ -4,9 +4,16 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/google/go-github/v28/github"
 	"golang.org/x/oauth2"
+)
+
+const (
+	owner    = "acim"
+	repo     = "go-github"
+	filepath = "counter.txt"
 )
 
 func main() {
@@ -15,19 +22,9 @@ func main() {
 		&oauth2.Token{AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN")},
 	)
 	tc := oauth2.NewClient(ctx, ts)
-
 	client := github.NewClient(tc)
 
-	// list all repositories for the authenticated user
-	repos, _, err := client.Repositories.List(ctx, "", nil)
-	if err != nil {
-		panic(err)
-	}
-	for _, r := range repos {
-		fmt.Println(*r.Name)
-	}
-
-	f, _, _, err := client.Repositories.GetContents(context.Background(), "acim", "go-github", "test.txt", nil)
+	f, _, _, err := client.Repositories.GetContents(context.TODO(), owner, repo, filepath, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -36,12 +33,22 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
-	c += "test\n"
-	o := &github.RepositoryContentFileOptions{
-		Content: []byte(c),
+	if c == "" {
+		c = "0"
 	}
-	_, _, err = client.Repositories.UpdateFile(context.Background(), "acim", "go-github", "test.txt", o)
+
+	i, err := strconv.ParseInt(c, 10, 64)
+	if err != nil {
+		panic(err)
+	}
+	i++
+
+	o := &github.RepositoryContentFileOptions{
+		Content: []byte(strconv.FormatInt(i, 10)),
+		SHA:     f.SHA,
+		Message: github.String(fmt.Sprintf("increase counter to %d", i)),
+	}
+	_, _, err = client.Repositories.UpdateFile(context.TODO(), owner, repo, filepath, o)
 	if err != nil {
 		panic(err)
 	}
