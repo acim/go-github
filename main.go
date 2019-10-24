@@ -27,10 +27,22 @@ func main() {
 		fmt.Println(*r.Name)
 	}
 
-	a, _, _, err := client.Repositories.GetContents(context.Background(), "acim", "go-reflex", "Dockerfile", nil)
+	f, _, _, err := client.Repositories.GetContents(context.Background(), "acim", "go-github", "test.txt", nil)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(a.GetContent())
 
+	c, err := f.GetContent()
+	if err != nil {
+		panic(err)
+	}
+
+	c += "test\n"
+	o := &github.RepositoryContentFileOptions{
+		Content: []byte(c),
+	}
+	_, _, err = client.Repositories.UpdateFile(context.Background(), "acim", "go-github", "test.txt", o)
+	if err != nil {
+		panic(err)
+	}
 }
